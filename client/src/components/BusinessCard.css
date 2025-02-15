@@ -1,0 +1,19 @@
+/* src/components/BusinessCard.css */
+.business-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 8px;
+    box-shadow: 0px 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+    width: 300px; /* Adjust width as needed */
+  }
+  
+  .business-card:hover {
+    transform: scale(1.02);
+  }
+  
+  .business-card h2 {
+    margin-top: 0;
+  }
+  

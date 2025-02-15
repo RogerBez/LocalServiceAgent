@@ -1,28 +1,22 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import BusinessCard from './components/BusinessCard'; // New import for the BusinessCard component
+import './App.css';
 
 function App() {
   const [query, setQuery] = useState('');
-  const [response, setResponse] = useState('');
+  const [businesses, setBusinesses] = useState([]);
 
   const handleQuery = async (e) => {
     e.preventDefault();
     try {
       const res = await axios.post('https://localserviceagent.onrender.com/query', { query });
-      const businesses = res.data.businesses;
-  
-      console.log('Businesses:', businesses);  // Debugging log
-      setResponse(
-        businesses.length > 0
-          ? businesses.map(biz => `${biz.name}, ${biz.address}, Rating: ${biz.rating}`).join('\n')
-          : 'No businesses found for your query.'
-      );
+      console.log('Businesses:', res.data.businesses);
+      setBusinesses(res.data.businesses);
     } catch (error) {
       console.error('Error:', error);
-      setResponse('Failed to get a response.');
     }
   };
-  
 
   return (
     <div className="App">
@@ -36,10 +30,22 @@ function App() {
         />
         <button type="submit">Search</button>
       </form>
-      <p>{response}</p>
+      <div className="business-list">
+        {businesses.length > 0 ? (
+          businesses.map((biz, index) => (
+            <BusinessCard
+              key={index}
+              name={biz.name}
+              address={biz.address}
+              rating={biz.rating}
+            />
+          ))
+        ) : (
+          <p>No businesses found for your query.</p>
+        )}
+      </div>
     </div>
   );
 }
 
 export default App;
-
