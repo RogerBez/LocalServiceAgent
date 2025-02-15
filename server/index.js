@@ -40,8 +40,10 @@ app.post('/query', async (req, res) => {
   console.log('Latitude:', latitude);
   console.log('Longitude:', longitude);
 
-  if (!query) {
-    return res.status(400).json({ message: 'Query is required' });
+  if (!latitude || !longitude) {
+    console.log('No location provided.');
+  } else {
+    console.log('Using location for the query.');
   }
 
   try {
@@ -53,13 +55,13 @@ app.post('/query', async (req, res) => {
     if (latitude && longitude) {
       params.location = `${latitude},${longitude}`;
       params.radius = 10000; // 10km radius
-      console.log('Request sent to Google Places with location and radius');
+      console.log('Request sent to Google Places with location and radius:', params.location);
     }
 
     const response = await axios.get('https://maps.googleapis.com/maps/api/place/textsearch/json', { params });
     console.log('Full Google Places Response:', response.data);
 
-    const businesses = response.data.results.map((biz) => ({
+    const businesses = response.data.results.map(biz => ({
       name: biz.name,
       address: biz.formatted_address,
       rating: biz.rating || 'No rating',
