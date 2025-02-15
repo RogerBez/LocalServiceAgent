@@ -27,13 +27,15 @@ function App() {
 
   const handleQuery = async (e) => {
     e.preventDefault();
-
-    const payload = { query };
-    if (location) {
-      payload.latitude = location.latitude;
-      payload.longitude = location.longitude;
-    }
-
+  
+    const payload = {
+      query,
+      latitude: -33.9249,  // Cape Town's latitude
+      longitude: 18.4241,  // Cape Town's longitude
+    };
+  
+    console.log('Payload being sent to backend:', payload);
+  
     try {
       const res = await axios.post('https://localserviceagent.onrender.com/query', payload);
       console.log('Businesses:', res.data.businesses);
