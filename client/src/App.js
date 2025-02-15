@@ -62,3 +62,10 @@ function App() {
           ))
         ) : (
           <p>No businesses found for your query.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;
