@@ -1,7 +1,7 @@
 // src/components/BusinessCard.js
 import React from 'react';
-import './BusinessCard.css'; // This will import your CSS for styling
-import { FaPhoneAlt, FaMapMarkerAlt } from 'react-icons/fa'; // Import icons
+import './BusinessCard.css'; // Import your CSS for styling
+import { FaPhoneAlt, FaMapMarkerAlt } from 'react-icons/fa'; // Correct icons
 
 function BusinessCard({ name, address, rating, latitude, longitude, phone }) {
   const handleGetDirections = () => {
@@ -23,16 +23,19 @@ function BusinessCard({ name, address, rating, latitude, longitude, phone }) {
   return (
     <div className="business-card">
       <h3>{name}</h3>
-      <p><FaMapMarkerAlt style={{ marginRight: '5px' }} /> {address}</p>
-      <p>Rating: {rating}</p>
-
+      <p>
+        <FaMapMarkerAlt style={{ marginRight: '5px' }} />
+        {address}
+      </p>
+      <p>
+        <strong>Rating:</strong> {rating}
+      </p>
       {phone && (
         <p>
           <FaPhoneAlt style={{ marginRight: '5px' }} />
           <a href={`tel:${phone}`}>{phone}</a>
         </p>
       )}
-
       <div className="buttons">
         <button onClick={handleGetDirections}>
           <FaMapMarkerAlt style={{ marginRight: '5px' }} />
