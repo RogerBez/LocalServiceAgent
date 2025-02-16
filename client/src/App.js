@@ -10,33 +10,43 @@ function App() {
   const [location, setLocation] = useState({ latitude: -33.9249, longitude: 18.4241 }); // Default to Cape Town
 
   useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!location) {
+        console.warn('Geolocation is taking too long, using default location.');
+        setLocation({ latitude: -33.9249, longitude: 18.4241 }); // Fallback to Cape Town
+      }
+    }, 10000); // 10 seconds timeout for geolocation
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          clearTimeout(timeout);
           const { latitude, longitude } = position.coords;
           setLocation({ latitude, longitude });
           console.log('User location:', latitude, longitude);
         },
         (error) => {
+          clearTimeout(timeout);
           console.error('Error getting location:', error);
         }
       );
     } else {
+      clearTimeout(timeout);
       console.error('Geolocation is not supported by this browser.');
     }
   }, []);
 
   const handleQuery = async (e) => {
     e.preventDefault();
-    
+
     const payload = {
       query,
       latitude: location.latitude,
       longitude: location.longitude,
     };
-  
+
     console.log('Payload being sent to backend:', payload);
-  
+
     try {
       const res = await axios.post('https://localserviceagent.onrender.com/query', payload);
       console.log('Businesses:', res.data.businesses);
@@ -61,7 +71,11 @@ function App() {
 
       {/* Render the map component */}
       <div className="map-container">
-        <MapComponent latitude={location.latitude} longitude={location.longitude} />
+        {businesses.length > 0 ? (
+          <MapComponent latitude={location.latitude} longitude={location.longitude} businesses={businesses} />
+        ) : (
+          <p>Map will display once businesses are found...</p>
+        )}
       </div>
 
       <div className="business-list">
@@ -70,7 +84,7 @@ function App() {
             <BusinessCard key={index} name={biz.name} address={biz.address} rating={biz.rating} />
           ))
         ) : (
-          <p>No businesses found for your query.</p>
+          <p>{query ? 'No businesses found for your query.' : 'Search for services to see results.'}</p>
         )}
       </div>
     </div>

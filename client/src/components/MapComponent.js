@@ -4,15 +4,14 @@ function MapComponent({ latitude, longitude, businesses }) {
   const mapRef = useRef(null);
 
   useEffect(() => {
-    console.log('Businesses received in MapComponent:', businesses);
-    if (window.google) {
-      console.log('Google Maps API is available');
-      
+    if (window.google && businesses.length > 0) {
       const map = new window.google.maps.Map(mapRef.current, {
         center: { lat: latitude, lng: longitude },
         zoom: 12,
       });
 
+      console.log('Google Maps API is available');
+      
       // Add a marker for the user's current location
       new window.google.maps.Marker({
         position: { lat: latitude, lng: longitude },
@@ -24,39 +23,36 @@ function MapComponent({ latitude, longitude, businesses }) {
       });
 
       // Add markers for each business
-      if (businesses.length > 0) {
-        businesses.forEach((biz) => {
-          console.log('Business:', biz.name, 'Latitude:', biz.latitude, 'Longitude:', biz.longitude);
-          if (biz.latitude && biz.longitude) {
-            const marker = new window.google.maps.Marker({
-              position: { lat: biz.latitude, lng: biz.longitude },
-              map: map,
-              title: biz.name,
-            });
+      businesses.forEach((biz) => {
+        console.log('Business:', biz.name, 'Latitude:', biz.latitude, 'Longitude:', biz.longitude);
 
-            const infoWindow = new window.google.maps.InfoWindow({
-              content: `
-                <div>
-                  <h4>${biz.name}</h4>
-                  <p>${biz.address}</p>
-                  <p>Rating: ${biz.rating}</p>
-                  <a href="https://www.google.com/maps/dir/?api=1&destination=${biz.latitude},${biz.longitude}" target="_blank">Get Directions</a>
-                </div>
-              `,
-            });
+        if (biz.latitude && biz.longitude) {
+          const marker = new window.google.maps.Marker({
+            position: { lat: biz.latitude, lng: biz.longitude },
+            map: map,
+            title: biz.name,
+          });
 
-            marker.addListener('click', () => {
-              infoWindow.open(map, marker);
-            });
-          } else {
-            console.log(`Business ${biz.name} does not have valid latitude/longitude.`);
-          }
-        });
-      } else {
-        console.log('No businesses to display on the map.');
-      }
+          const infoWindow = new window.google.maps.InfoWindow({
+            content: `
+              <div>
+                <h4>${biz.name}</h4>
+                <p>${biz.address}</p>
+                <p>Rating: ${biz.rating}</p>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=${biz.latitude},${biz.longitude}" target="_blank">Get Directions</a>
+              </div>
+            `,
+          });
+
+          marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+          });
+        } else {
+          console.warn(`Business ${biz.name} does not have valid latitude/longitude.`);
+        }
+      });
     } else {
-      console.log('Google Maps API is not loaded.');
+      console.warn('Google Maps API is not loaded or there are no businesses.');
     }
   }, [latitude, longitude, businesses]);
 

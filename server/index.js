@@ -74,10 +74,12 @@ app.post('/query', async (req, res) => {
 
     console.log('Full Google Places Response:', JSON.stringify(response.data, null, 2));
 
-    const businesses = response.data.results.map((biz) => ({
+    const businesses = response.data.results.map(biz => ({
       name: biz.name,
       address: biz.formatted_address,
       rating: biz.rating || 'No rating',
+      latitude: biz.geometry?.location?.lat,   // Add latitude
+      longitude: biz.geometry?.location?.lng, // Add longitude
     }));
 
     res.json({ businesses });
