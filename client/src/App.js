@@ -18,24 +18,33 @@ function App() {
         },
         (error) => {
           console.error('Error getting location:', error);
+          // Fallback to Cape Town if geolocation fails
+          setLocation({ latitude: -33.9249, longitude: 18.4241 });
+          console.log('Fallback to Cape Town location');
         }
       );
     } else {
       console.error('Geolocation is not supported by this browser.');
+      setLocation({ latitude: -33.9249, longitude: 18.4241 }); // Fallback to Cape Town
     }
   }, []);
 
   const handleQuery = async (e) => {
     e.preventDefault();
-  
+
+    if (!location) {
+      console.log('Location not available yet.');
+      return;
+    }
+
     const payload = {
       query,
-      latitude: -33.9249,  // Cape Town's latitude
-      longitude: 18.4241,  // Cape Town's longitude
+      latitude: location.latitude,
+      longitude: location.longitude,
     };
-  
+
     console.log('Payload being sent to backend:', payload);
-  
+
     try {
       const res = await axios.post('https://localserviceagent.onrender.com/query', payload);
       console.log('Businesses:', res.data.businesses);
