@@ -24,8 +24,7 @@ app.use(
 );
 
 // Serve static files from the React app
-//app.use(express.static(path.join(__dirname, '../client/build')));
-app.use(express.static(path.join(__dirname, './client/build')));
+app.use(express.static(path.join(__dirname, '../client/build')));
 
 // Test API route
 app.post('/query', async (req, res) => {
@@ -76,7 +75,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
 });
 
-// **Add this block to start your server**
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on http://0.0.0.0:${PORT}`);
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
