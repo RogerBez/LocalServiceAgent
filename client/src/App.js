@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import BusinessCard from './components/BusinessCard';
+import MapComponent from './components/MapComponent'; // Add the map component
 import './App.css';
 
 function App() {
