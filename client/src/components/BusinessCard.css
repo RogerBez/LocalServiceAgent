@@ -1,19 +1,52 @@
-/* src/components/BusinessCard.css */
 .business-card {
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 16px;
-    margin: 8px;
-    box-shadow: 0px 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
-    width: 300px; /* Adjust width as needed */
-  }
-  
-  .business-card:hover {
-    transform: scale(1.02);
-  }
-  
-  .business-card h2 {
-    margin-top: 0;
-  }
-  
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  transition: box-shadow 0.3s ease;
+}
+
+.business-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.business-card h3 {
+  margin: 0 0 5px;
+  font-size: 18px;
+  color: #333;
+}
+
+.business-card p {
+  margin: 5px 0;
+  color: #555;
+  font-size: 14px;
+}
+
+.buttons {
+  margin-top: 10px;
+}
+
+.buttons button {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: white;
+  background-color: #007BFF;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.buttons button:hover {
+  background-color: #0056b3;
+}
+
+.buttons button svg {
+  margin-right: 5px;
+  font-size: 16px;
+}

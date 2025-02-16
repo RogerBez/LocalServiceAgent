@@ -81,7 +81,15 @@ function App() {
       <div className="business-list">
         {businesses.length > 0 ? (
           businesses.map((biz, index) => (
-            <BusinessCard key={index} name={biz.name} address={biz.address} rating={biz.rating} />
+            <BusinessCard 
+              key={index} 
+              name={biz.name} 
+              address={biz.address} 
+              rating={biz.rating} 
+              latitude={biz.latitude} 
+              longitude={biz.longitude} 
+              phone={biz.phone}  // Add phone if available
+            />
           ))
         ) : (
           <p>{query ? 'No businesses found for your query.' : 'Search for services to see results.'}</p>
