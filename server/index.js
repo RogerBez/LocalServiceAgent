@@ -21,18 +21,23 @@ const allowedOrigins = [
   'https://local-service-agent.vercel.app',
   'http://localhost:5000'
 ];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: '*', // Allow all origins for testing
   })
 );
+//
+//app.use(
+//  cors({
+//    origin: function (origin, callback) {
+//      if (!origin || allowedOrigins.includes(origin)) {
+//        callback(null, true);
+//      } else {
+//        callback(new Error('Not allowed by CORS'));
+//      }
+//    },
+ // })
+//);
 
 
 // Serve static files from the React app
