@@ -31,20 +31,15 @@ function App() {
 
   const handleQuery = async (e) => {
     e.preventDefault();
-
-    if (!location) {
-      console.log('Location not available yet.');
-      return;
-    }
-
+    
     const payload = {
       query,
-      latitude: location.latitude,
-      longitude: location.longitude,
+      latitude: location?.latitude || -33.9249,  // Default to Cape Town if location is missing
+      longitude: location?.longitude || 18.4241
     };
-
-    console.log('Payload being sent to backend:', payload);
-
+  
+    console.log('Payload being sent to backend:', payload);  // Add this line
+  
     try {
       const res = await axios.post('https://localserviceagent.onrender.com/query', payload);
       console.log('Businesses:', res.data.businesses);
