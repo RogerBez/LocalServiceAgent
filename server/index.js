@@ -27,11 +27,6 @@ app.use(
 app.use(express.static(path.join(__dirname, '../client/build')));
 
 // Test API route
-app.get('/api', (req, res) => {
-  res.json({ message: 'Hello from server!' });
-});
-
-// Handle search queries
 app.post('/query', async (req, res) => {
   const { query, latitude, longitude } = req.body;
 
@@ -40,10 +35,8 @@ app.post('/query', async (req, res) => {
   console.log('Latitude:', latitude);
   console.log('Longitude:', longitude);
 
-  if (!latitude || !longitude) {
-    console.log('No location provided.');
-  } else {
-    console.log('Using location for the query.');
+  if (!query) {
+    return res.status(400).json({ message: 'Query is required' });
   }
 
   try {
@@ -55,11 +48,15 @@ app.post('/query', async (req, res) => {
     if (latitude && longitude) {
       params.location = `${latitude},${longitude}`;
       params.radius = 10000; // 10km radius
-      console.log('Request sent to Google Places with location and radius:', params.location);
     }
 
+    // Log full request to Google Places API
+    console.log('Request params:', params);
+
     const response = await axios.get('https://maps.googleapis.com/maps/api/place/textsearch/json', { params });
-    console.log('Full Google Places Response:', response.data);
+
+    // Log full response data for further analysis
+    console.log('Full Google Places Response:', JSON.stringify(response.data, null, 2));
 
     const businesses = response.data.results.map(biz => ({
       name: biz.name,
@@ -73,6 +70,7 @@ app.post('/query', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch data from Google Places' });
   }
 });
+
 
 // The "catchall" handler for React's index.html
 app.get('*', (req, res) => {
