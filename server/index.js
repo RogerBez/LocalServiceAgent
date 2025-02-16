@@ -19,7 +19,7 @@ app.use(express.json());
 // Enable CORS for requests from your frontend
 app.use(
   cors({
-    origin: 'https://local-service-agent.vercel.app', // Your Vercel frontend URL
+    origin: 'https://local-service-agent.vercel.app',
   })
 );
 
@@ -29,10 +29,9 @@ app.use(express.static(path.join(__dirname, '../client/build')));
 // Test API route
 app.post('/query', async (req, res) => {
   console.log('--- Incoming payload ---');
-  console.log('Request body:', req.body);  // Add this line
+  console.log('Request body:', req.body);
   const { query, latitude, longitude } = req.body;
 
-  
   console.log('Query:', query);
   console.log('Latitude:', latitude);
   console.log('Longitude:', longitude);
@@ -52,15 +51,13 @@ app.post('/query', async (req, res) => {
       params.radius = 10000; // 10km radius
     }
 
-    // Log full request to Google Places API
     console.log('Request params:', params);
 
     const response = await axios.get('https://maps.googleapis.com/maps/api/place/textsearch/json', { params });
 
-    // Log full response data for further analysis
     console.log('Full Google Places Response:', JSON.stringify(response.data, null, 2));
 
-    const businesses = response.data.results.map(biz => ({
+    const businesses = response.data.results.map((biz) => ({
       name: biz.name,
       address: biz.formatted_address,
       rating: biz.rating || 'No rating',
@@ -73,8 +70,12 @@ app.post('/query', async (req, res) => {
   }
 });
 
-
 // The "catchall" handler for React's index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+});
+
+// **Add this block to start your server**
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });
