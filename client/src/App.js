@@ -8,19 +8,17 @@ function App() {
   const [query, setQuery] = useState('');
   const [businesses, setBusinesses] = useState([]);
   const [location, setLocation] = useState(null);
-  const [locationError, setLocationError] = useState(null);
+  const [locationError, setLocationError] = useState('');
   const [userName, setUserName] = useState('');
-  const [conversationStep, setConversationStep] = useState(1); // Step 1: Greet the user
+  const [conversationStep, setConversationStep] = useState(1);
 
   useEffect(() => {
-    // Check if the user has a name stored in localStorage
     const storedName = localStorage.getItem('userName');
     if (storedName) {
       setUserName(storedName);
-      setConversationStep(2); // Skip to service question if we already know their name
+      setConversationStep(2);
     }
 
-    // Geolocation with a timeout for fallback
     const timeout = setTimeout(() => {
       if (!location) {
         setLocationError('Geolocation is taking too long. Please allow location access.');
@@ -31,10 +29,9 @@ function App() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           clearTimeout(timeout);
-          const { latitude, longitude } = position.coords;
-          setLocation({ latitude, longitude });
+          setLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude });
         },
-        (error) => {
+        () => {
           clearTimeout(timeout);
           setLocationError('Failed to get location. Please check your browser settings.');
         }
@@ -53,7 +50,6 @@ function App() {
 
   const handleQuerySubmit = async (e) => {
     e.preventDefault();
-
     if (!location) {
       setLocationError('Location is required to search for nearby services.');
       return;
@@ -67,8 +63,9 @@ function App() {
 
     try {
       const res = await axios.post('https://localserviceagent.onrender.com/query', payload);
+      console.log('Response from backend:', res.data);
       setBusinesses(res.data.businesses);
-      setConversationStep(3); // Show results
+      setConversationStep(3);
     } catch (error) {
       setLocationError('Failed to fetch businesses. Please try again.');
     }
@@ -112,7 +109,11 @@ function App() {
       {conversationStep === 3 && (
         <>
           <div className="map-container">
-            <MapComponent latitude={location.latitude} longitude={location.longitude} businesses={businesses} />
+            {location ? (
+              <MapComponent latitude={location.latitude} longitude={location.longitude} businesses={businesses} />
+            ) : (
+              <p>Loading map...</p>
+            )}
           </div>
           <div className="business-list">
             {businesses.length > 0 ? (
