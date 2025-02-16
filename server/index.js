@@ -28,9 +28,11 @@ app.use(express.static(path.join(__dirname, '../client/build')));
 
 // Test API route
 app.post('/query', async (req, res) => {
+  console.log('--- Incoming payload ---');
+  console.log('Request body:', req.body);  // Add this line
   const { query, latitude, longitude } = req.body;
 
-  console.log('--- Incoming payload ---');
+  
   console.log('Query:', query);
   console.log('Latitude:', latitude);
   console.log('Longitude:', longitude);
