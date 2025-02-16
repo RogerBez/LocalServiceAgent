@@ -5,9 +5,9 @@ import MapComponent from './components/MapComponent';
 import './App.css';
 
 function App() {
-  const [messages, setMessages] = useState([{ sender: 'agent', text: 'Hi there! What are you looking for?' }]);
+  const [messages, setMessages] = useState([{ sender: 'agent', text: 'Hi there! What’s your name?' }]);
   const [query, setQuery] = useState('');
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // Start at step 0 to ask for the user's name
   const [typing, setTyping] = useState(false);
   const [businesses, setBusinesses] = useState([]);
   const [location, setLocation] = useState(null);
@@ -29,30 +29,40 @@ function App() {
   }, []);
 
   useEffect(() => {
-    chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    if (chatWindowRef.current) {
+      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    }
   }, [messages]);
 
   const handleUserResponse = (userInput) => {
     setMessages((prev) => [...prev, { sender: 'user', text: userInput }]);
     setTyping(true);
-
+  
     setTimeout(() => {
       setTyping(false);
-      if (step === 1) {
-        setQuery(userInput);
+  
+      if (step === 0) {
+        localStorage.setItem('userName', userInput); 
+        setMessages((prev) => [...prev, { sender: 'agent', text: `Hi ${userInput}! What are you looking for?` }]);
+        setStep(1);
+      } else if (step === 1) {
+        setQuery('');  // Clear input box
         setMessages((prev) => [...prev, { sender: 'agent', text: 'Got it! How far should I search—5 km or 10 km?' }]);
         setStep(2);
       } else if (step === 2) {
+        setQuery('');  // Clear input box
         const selectedRadius = userInput.includes('10') ? 10000 : 5000;
         setMessages((prev) => [...prev, { sender: 'agent', text: 'Would you prefer top-rated or closest?' }]);
         setStep(3);
       } else if (step === 3) {
+        setQuery('');  // Clear input box
         setMessages((prev) => [...prev, { sender: 'agent', text: 'Searching for the best results...' }]);
         fetchBusinesses();
         setStep(4);
       }
     }, 1000);
   };
+  
 
   const fetchBusinesses = async () => {
     if (!location) {
@@ -73,10 +83,10 @@ function App() {
       const res = await axios.post('https://localserviceagent.onrender.com/query', payload);
       console.log('Response from backend:', res.data);
 
-      // Update businesses state with res.data.results
-      setBusinesses(res.data.results);
+      const businesses = res.data.businesses || []; // Handle undefined or null responses
+      setBusinesses(businesses);
 
-      if (res.data.results.length > 0) {
+      if (businesses.length > 0) {
         setMessages((prev) => [...prev, { sender: 'agent', text: 'Here are the results:' }]);
       } else {
         setMessages((prev) => [...prev, { sender: 'agent', text: 'No businesses found for your query.' }]);
@@ -114,10 +124,12 @@ function App() {
       </form>
 
       <div className="map-container">
-        {location && (
-          <MapComponent latitude={location.latitude} longitude={location.longitude} businesses={businesses} />
-        )}
-      </div>
+  {location ? (
+    <MapComponent latitude={location.latitude} longitude={location.longitude} businesses={businesses} />
+  ) : (
+    <p>Loading map...</p>
+  )}
+</div>
 
       <div className="business-list">
         {Array.isArray(businesses) && businesses.length > 0 ? (
@@ -132,7 +144,7 @@ function App() {
             />
           ))
         ) : (
-          <p>Loading businesses or no results found.</p>
+          <p>No businesses found or loading...</p>
         )}
       </div>
     </div>

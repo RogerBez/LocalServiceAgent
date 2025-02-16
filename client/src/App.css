@@ -23,14 +23,14 @@ h1 {
 }
 
 .chat-window {
-  height: 300px;
+  height: 200px; /* Reduce height to make it smaller */
   overflow-y: scroll;
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 10px;
-  background: #ecf0f1;
   margin-bottom: 10px;
 }
+
 
 .message {
   padding: 8px 12px;

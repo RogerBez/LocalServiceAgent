@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 function MapComponent({ latitude, longitude, businesses }) {
   const mapRef = useRef(null);
   let map = useRef(null);
+  let userMarker = useRef(null);
   let markers = [];
 
   useEffect(() => {
@@ -10,27 +11,35 @@ function MapComponent({ latitude, longitude, businesses }) {
       console.log('Google Maps API is available');
 
       if (!map.current) {
+        // Initialize the map only once
         map.current = new window.google.maps.Map(mapRef.current, {
           center: { lat: latitude, lng: longitude },
           zoom: 12,
         });
       } else {
+        // Re-center the map if latitude/longitude changes
         map.current.setCenter({ lat: latitude, lng: longitude });
       }
 
+      // Add or update the user marker
+      if (userMarker.current) {
+        userMarker.current.setPosition({ lat: latitude, lng: longitude });
+      } else {
+        userMarker.current = new window.google.maps.Marker({
+          position: { lat: latitude, lng: longitude },
+          map: map.current,
+          title: 'You are here',
+          icon: {
+            url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+          },
+        });
+      }
+
+      // Clear existing business markers
       markers.forEach(marker => marker.setMap(null));
       markers = [];
 
-      const userMarker = new window.google.maps.Marker({
-        position: { lat: latitude, lng: longitude },
-        map: map.current,
-        title: 'You are here',
-        icon: {
-          url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-        },
-      });
-      markers.push(userMarker);
-
+      // Add markers for each business
       if (Array.isArray(businesses) && businesses.length > 0) {
         businesses.forEach(biz => {
           if (biz.geometry.location.lat && biz.geometry.location.lng) {
@@ -64,7 +73,7 @@ function MapComponent({ latitude, longitude, businesses }) {
   }, [latitude, longitude, businesses]);
 
   return window.google ? (
-    <div ref={mapRef} style={{ height: '500px', width: '100%', borderRadius: '8px' }} />
+    <div ref={mapRef} style={{ height: '400px', width: '100%', borderRadius: '8px' }} />
   ) : (
     <p>Map is not available. Please try again later.</p>
   );
