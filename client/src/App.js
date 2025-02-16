@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import BusinessCard from './components/BusinessCard';
-import MapComponent from './components/MapComponent'; // Add the map component
+import MapComponent from './components/MapComponent'; // Import the map component
 import './App.css';
 
 function App() {
   const [query, setQuery] = useState('');
   const [businesses, setBusinesses] = useState([]);
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState({ latitude: -33.9249, longitude: 18.4241 }); // Default to Cape Town
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -19,14 +19,10 @@ function App() {
         },
         (error) => {
           console.error('Error getting location:', error);
-          // Fallback to Cape Town if geolocation fails
-          setLocation({ latitude: -33.9249, longitude: 18.4241 });
-          console.log('Fallback to Cape Town location');
         }
       );
     } else {
       console.error('Geolocation is not supported by this browser.');
-      setLocation({ latitude: -33.9249, longitude: 18.4241 }); // Fallback to Cape Town
     }
   }, []);
 
@@ -35,11 +31,11 @@ function App() {
     
     const payload = {
       query,
-      latitude: location?.latitude || -33.9249,  // Default to Cape Town if location is missing
-      longitude: location?.longitude || 18.4241
+      latitude: location.latitude,
+      longitude: location.longitude,
     };
   
-    console.log('Payload being sent to backend:', payload);  // Add this line
+    console.log('Payload being sent to backend:', payload);
   
     try {
       const res = await axios.post('https://localserviceagent.onrender.com/query', payload);
@@ -62,6 +58,12 @@ function App() {
         />
         <button type="submit">Search</button>
       </form>
+
+      {/* Render the map component */}
+      <div className="map-container">
+        <MapComponent latitude={location.latitude} longitude={location.longitude} />
+      </div>
+
       <div className="business-list">
         {businesses.length > 0 ? (
           businesses.map((biz, index) => (
