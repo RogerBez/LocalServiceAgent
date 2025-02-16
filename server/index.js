@@ -24,7 +24,8 @@ app.use(
 );
 
 // Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../client/build')));
+//app.use(express.static(path.join(__dirname, '../client/build')));
+app.use(express.static(path.join(__dirname, './client/build')));
 
 // Test API route
 app.post('/query', async (req, res) => {
