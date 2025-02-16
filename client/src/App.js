@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import BusinessCard from './components/BusinessCard';
-import MapComponent from './components/MapComponent'; // Import the map component
+import MapComponent from './components/MapComponent';
 import './App.css';
 
 function App() {
   const [query, setQuery] = useState('');
   const [businesses, setBusinesses] = useState([]);
-  const [location, setLocation] = useState({ latitude: -33.9249, longitude: 18.4241 }); // Default to Cape Town
+  const [location, setLocation] = useState(null); // No default location initially
+  const [locationError, setLocationError] = useState(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!location) {
-        console.warn('Geolocation is taking too long, using default location.');
-        setLocation({ latitude: -33.9249, longitude: 18.4241 }); // Fallback to Cape Town
+        setLocationError('Geolocation is taking too long. Please allow location access.');
+        console.warn('Geolocation is taking too long.');
       }
-    }, 10000); // 10 seconds timeout for geolocation
+    }, 10000); // 10-second timeout for geolocation
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -27,17 +28,25 @@ function App() {
         },
         (error) => {
           clearTimeout(timeout);
+          setLocationError('Failed to get location. Please check your browser settings.');
           console.error('Error getting location:', error);
         }
       );
     } else {
       clearTimeout(timeout);
-      console.error('Geolocation is not supported by this browser.');
+      setLocationError('Geolocation is not supported by this browser.');
+      console.error('Geolocation is not supported.');
     }
   }, []);
 
   const handleQuery = async (e) => {
     e.preventDefault();
+
+    if (!location) {
+      console.error('Location is not available.');
+      setLocationError('Location is required to search for nearby services.');
+      return;
+    }
 
     const payload = {
       query,
@@ -52,7 +61,8 @@ function App() {
       console.log('Businesses:', res.data.businesses);
       setBusinesses(res.data.businesses);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error fetching businesses:', error);
+      setLocationError('Failed to fetch businesses. Please try again.');
     }
   };
 
@@ -69,26 +79,27 @@ function App() {
         <button type="submit">Search</button>
       </form>
 
-      {/* Render the map component */}
+      {locationError && <p className="error-message">{locationError}</p>}
+
       <div className="map-container">
         {businesses.length > 0 ? (
           <MapComponent latitude={location.latitude} longitude={location.longitude} businesses={businesses} />
         ) : (
-          <p>Map will display once businesses are found...</p>
+          <p>{location ? 'Search for services to see results on the map.' : 'Waiting for your location...'}</p>
         )}
       </div>
 
       <div className="business-list">
         {businesses.length > 0 ? (
           businesses.map((biz, index) => (
-            <BusinessCard 
-              key={index} 
-              name={biz.name} 
-              address={biz.address} 
-              rating={biz.rating} 
-              latitude={biz.latitude} 
-              longitude={biz.longitude} 
-              phone={biz.phone}  // Add phone if available
+            <BusinessCard
+              key={index}
+              name={biz.name}
+              address={biz.address}
+              rating={biz.rating}
+              latitude={biz.latitude}
+              longitude={biz.longitude}
+              phone={biz.phone}
             />
           ))
         ) : (

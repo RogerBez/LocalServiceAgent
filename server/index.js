@@ -19,26 +19,26 @@ app.use(express.json());
 // Enable CORS for requests from your frontend
 const allowedOrigins = [
   'https://local-service-agent.vercel.app',
+  'http://localhost:3000',
   'http://localhost:5000'
 ];
+
 app.use(
   cors({
-    origin: '*', // Allow all origins for testing
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
-//
-//app.use(
-//  cors({
-//    origin: function (origin, callback) {
-//      if (!origin || allowedOrigins.includes(origin)) {
-//        callback(null, true);
-//      } else {
-//        callback(new Error('Not allowed by CORS'));
-//      }
-//    },
- // })
-//);
 
+// Preflight handling
+app.options('*', cors());
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../client/build')));
@@ -47,26 +47,24 @@ app.use(express.static(path.join(__dirname, '../client/build')));
 app.post('/query', async (req, res) => {
   console.log('--- Incoming payload ---');
   console.log('Request body:', req.body);
-  const { query, latitude, longitude } = req.body;
 
-  console.log('Query:', query);
-  console.log('Latitude:', latitude);
-  console.log('Longitude:', longitude);
+  const { query, latitude, longitude } = req.body;
 
   if (!query) {
     return res.status(400).json({ message: 'Query is required' });
   }
 
+  console.log('Query:', query);
+  console.log('Latitude:', latitude);
+  console.log('Longitude:', longitude);
+
   try {
     const params = {
       query,
+      location: `${latitude},${longitude}`,
+      radius: 5000, // 5 km radius
       key: apiKey,
     };
-
-    if (latitude && longitude) {
-      params.location = `${latitude},${longitude}`;
-      params.radius = 10000; // 10km radius
-    }
 
     console.log('Request params:', params);
 
@@ -74,12 +72,13 @@ app.post('/query', async (req, res) => {
 
     console.log('Full Google Places Response:', JSON.stringify(response.data, null, 2));
 
-    const businesses = response.data.results.map(biz => ({
+    const businesses = response.data.results.map((biz) => ({
       name: biz.name,
       address: biz.formatted_address,
       rating: biz.rating || 'No rating',
-      latitude: biz.geometry?.location?.lat,   // Add latitude
+      latitude: biz.geometry?.location?.lat, // Add latitude
       longitude: biz.geometry?.location?.lng, // Add longitude
+      phone: biz.formatted_phone_number || 'N/A' // Add phone if available
     }));
 
     res.json({ businesses });
