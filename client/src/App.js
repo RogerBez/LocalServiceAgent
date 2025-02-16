@@ -7,13 +7,13 @@ import './App.css';
 function App() {
   const [query, setQuery] = useState('');
   const [businesses, setBusinesses] = useState([]);
-  const [location, setLocation] = useState(null); // No default location initially
+  const [location, setLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!location) {
-        setLocationError('Geolocation is taking too long. Please allow location access.');
+        setLocationError('Geolocation is taking too long. Please allow location access or set your location manually.');
         console.warn('Geolocation is taking too long.');
       }
     }, 10000); // 10-second timeout for geolocation
@@ -28,13 +28,13 @@ function App() {
         },
         (error) => {
           clearTimeout(timeout);
-          setLocationError('Failed to get location. Please check your browser settings.');
+          setLocationError('Failed to get location. Please allow location access or set it manually.');
           console.error('Error getting location:', error);
         }
       );
     } else {
       clearTimeout(timeout);
-      setLocationError('Geolocation is not supported by this browser.');
+      setLocationError('Geolocation is not supported by this browser. Set your location manually.');
       console.error('Geolocation is not supported.');
     }
   }, []);
@@ -66,6 +66,16 @@ function App() {
     }
   };
 
+  const handleSetLocation = () => {
+    const manualLat = prompt('Enter latitude:', location?.latitude || '-33.9249');
+    const manualLng = prompt('Enter longitude:', location?.longitude || '18.4241');
+    if (manualLat && manualLng) {
+      setLocation({ latitude: parseFloat(manualLat), longitude: parseFloat(manualLng) });
+      setLocationError(null);
+      console.log('Manual location set:', manualLat, manualLng);
+    }
+  };
+
   return (
     <div className="App">
       <h1>Local Service Finder</h1>
@@ -79,7 +89,11 @@ function App() {
         <button type="submit">Search</button>
       </form>
 
-      {locationError && <p className="error-message">{locationError}</p>}
+      {locationError && (
+        <p className="error-message">
+          {locationError} <button onClick={handleSetLocation}>Set Location Manually</button>
+        </p>
+      )}
 
       <div className="map-container">
         {businesses.length > 0 ? (
@@ -99,7 +113,7 @@ function App() {
               rating={biz.rating}
               latitude={biz.latitude}
               longitude={biz.longitude}
-              phone={biz.phone}
+              phone={biz.phone !== 'N/A' ? biz.phone : null} // Only pass phone if it’s valid
             />
           ))
         ) : (
