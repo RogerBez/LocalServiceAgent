@@ -2,14 +2,13 @@ import React, { useEffect, useRef } from 'react';
 
 function MapComponent({ latitude, longitude, businesses }) {
   const mapRef = useRef(null);
-  let map = useRef(null); // Store the map instance
-  let markers = []; // Store markers to clear them on updates
+  let map = useRef(null);
+  let markers = [];
 
   useEffect(() => {
     if (window.google) {
       console.log('Google Maps API is available');
 
-      // Initialize or re-center the map
       if (!map.current) {
         map.current = new window.google.maps.Map(mapRef.current, {
           center: { lat: latitude, lng: longitude },
@@ -19,11 +18,9 @@ function MapComponent({ latitude, longitude, businesses }) {
         map.current.setCenter({ lat: latitude, lng: longitude });
       }
 
-      // Clear previous markers
       markers.forEach(marker => marker.setMap(null));
-      markers = []; // Reset the markers array
+      markers = [];
 
-      // Add a marker for the user's current location
       const userMarker = new window.google.maps.Marker({
         position: { lat: latitude, lng: longitude },
         map: map.current,
@@ -34,12 +31,11 @@ function MapComponent({ latitude, longitude, businesses }) {
       });
       markers.push(userMarker);
 
-      // Add markers for businesses
       if (Array.isArray(businesses) && businesses.length > 0) {
         businesses.forEach(biz => {
-          if (biz.latitude && biz.longitude) {
+          if (biz.geometry.location.lat && biz.geometry.location.lng) {
             const marker = new window.google.maps.Marker({
-              position: { lat: biz.latitude, lng: biz.longitude },
+              position: { lat: biz.geometry.location.lat, lng: biz.geometry.location.lng },
               map: map.current,
               title: biz.name,
             });
@@ -48,17 +44,15 @@ function MapComponent({ latitude, longitude, businesses }) {
               content: `
                 <div>
                   <h4>${biz.name}</h4>
-                  <p>${biz.address ? biz.address : 'Address not available'}</p>
-                  <p>Rating: ${biz.rating ? biz.rating : 'N/A'}</p>
-                  <a href="https://www.google.com/maps/dir/?api=1&destination=${biz.latitude},${biz.longitude}" target="_blank">Get Directions</a>
+                  <p>${biz.formatted_address}</p>
+                  <p>Rating: ${biz.rating || 'N/A'}</p>
+                  <a href="https://www.google.com/maps/dir/?api=1&destination=${biz.geometry.location.lat},${biz.geometry.location.lng}" target="_blank">Get Directions</a>
                 </div>
               `,
             });
 
             marker.addListener('click', () => infoWindow.open(map.current, marker));
             markers.push(marker);
-          } else {
-            console.warn(`Business ${biz.name} does not have valid latitude/longitude.`);
           }
         });
       } else {
