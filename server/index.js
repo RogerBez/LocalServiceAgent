@@ -17,11 +17,23 @@ console.log('API Key:', apiKey);
 app.use(express.json());
 
 // Enable CORS for requests from your frontend
+const allowedOrigins = [
+  'https://local-service-agent.vercel.app',
+  'http://localhost:5000'
+];
+
 app.use(
   cors({
-    origin: 'https://local-service-agent.vercel.app',
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
   })
 );
+
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../client/build')));
