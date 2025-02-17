@@ -11,12 +11,18 @@ function App() {
   const chatWindowRef = useRef(null);
 
   useEffect(() => {
+    localStorage.removeItem("userLocation"); // 🛑 Clear stored location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           console.log('📍 Fresh user location detected:', latitude, longitude);
           setLocation({ latitude, longitude });
+          console.log("🚀 Sending API Request with:", {
+            query,
+            latitude: location?.latitude,
+            longitude: location?.longitude,
+          });
         },
         async (error) => {
           console.error('❌ GPS Location Error:', error);
@@ -49,11 +55,22 @@ function App() {
     setMessages((prev) => [...prev, { sender: 'user', text: userInput }]);
     setQuery('');
 
+    // 🛑 Wait for location to be set properly
     if (!location || !location.latitude || !location.longitude) {
-      console.log('❌ Location not available. Using fallback.');
-      setMessages((prev) => [...prev, { sender: 'agent', text: 'I need access to your location to find businesses near you.' }]);
+      console.log('❌ Location not available. Waiting...');
+      setTimeout(() => {
+          console.log('🔄 Retrying with updated location:', location);
+          handleUserResponse(userInput); // Try again
+      }, 1000);
       return;
-    }
+  }
+    //if (!location || !location.latitude || !location.longitude) {
+     // console.log('❌ Location not available. Using fallback.');
+    //  setMessages((prev) => [...prev, { sender: 'agent', text: 'I need access to your location to find businesses near you.' }]);
+    //  return;
+   // }
+    console.log("🔍 Searching Google Places API with:", userInput);
+    console.log("📍 User Location (Latitude, Longitude):", location.latitude, location.longitude);
 
     setMessages((prev) => [...prev, { sender: 'agent', text: 'Got it! Searching for the best results near you...' }]);
 
@@ -110,6 +127,11 @@ function App() {
             <p><strong>Rating:</strong> {biz.rating ? `${biz.rating} ⭐` : 'No rating'}</p>
             <p><strong>Phone:</strong> {biz.phone || 'N/A'}</p>
             <p><strong>Website:</strong> {biz.website ? <a href={biz.website} target="_blank" rel="noopener noreferrer">Visit Website</a> : 'No website'}</p>
+            <p><strong>Category:</strong> {biz.category || 'N/A'}</p>
+            <p><strong>Opening Hours:</strong> {biz.opening_hours || 'N/A'}</p>
+            <p><strong>Service Options:</strong> {biz.service_options || 'N/A'}</p>
+            <p><strong>Amenities:</strong> {biz.amenities || 'N/A'}</p>
+            {biz.photo && <img src={biz.photo} alt={biz.name} className="business-photo" />}
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${biz.latitude},${biz.longitude}`} className="directions-button" target="_blank" rel="noopener noreferrer">Get Directions</a>
           </div>
         ))}

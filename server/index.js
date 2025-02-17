@@ -1,118 +1,89 @@
-require('dotenv').config({ path: './.env' });
-
-console.log("Google API Key:", process.env.GOOGLE_API_KEY);
-console.log("OpenAI API Key:", process.env.OPENAI_API_KEY ? "Loaded" : "Not found");
-
 const express = require('express');
-const cors = require('cors');
 const axios = require('axios');
-const { OpenAI } = require('openai');
+const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const apiKey = process.env.GOOGLE_API_KEY;
-const openaiApiKey = process.env.OPENAI_API_KEY;
 
-console.log('Google API Key:', apiKey);
-console.log('OpenAI API Key:', openaiApiKey ? 'Loaded successfully' : 'Not found');
-
+app.use(cors());
 app.use(express.json());
 
-const allowedOrigins = [
-  'https://local-service-agent.vercel.app',
-  'http://localhost:3000',
-  'http://localhost:5000'
-];
+const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
+const PLACES_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
+const DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json";
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
-
-app.options('*', cors());
-
-// 🔍 Function to Fetch Business Details
-const getBusinessDetails = async (placeId) => {
-  try {
-    const response = await axios.get('https://maps.googleapis.com/maps/api/place/details/json', {
-      params: {
-        place_id: placeId,
-        key: apiKey,
-        fields: 'name,formatted_address,rating,geometry,formatted_phone_number,website'
-      }
-    });
-
-    return response.data.result || null;
-  } catch (error) {
-    console.error(`❌ Error fetching details for place_id ${placeId}:`, error.message);
-    return null;
-  }
-};
-
-// ✅ **Main API Route to Handle Queries**
 app.post('/query', async (req, res) => {
-  console.log('--- Incoming payload ---');
-  console.log('Request body:', req.body);
-
-  const { query, latitude, longitude } = req.body;
-  if (!query) return res.status(400).json({ message: 'Query is required' });
-
-  console.log('User Query:', query);
-  console.log('Latitude:', latitude);
-  console.log('Longitude:', longitude);
-
-  try {
-    console.log('🔍 Searching Google Places API with:', query);
-    const response = await axios.get('https://maps.googleapis.com/maps/api/place/textsearch/json', {
-      params: {
-        query,
-        location: `${latitude},${longitude}`,
-        radius: 10000, 
-        key: apiKey,
-      }
-    });
-
-    if (!response.data.results || response.data.results.length === 0) {
-      console.warn('❌ No businesses found.');
-      return res.json({ businesses: [] });
+  console.log("🚀 Incoming request payload:", req.body);  // ✅ LOG REQUEST
+    const { query, latitude, longitude } = req.body;
+    console.log(`🔍 Searching Google Places API with: ${query}`);
+    console.log(`📍 Backend Received Location: ${latitude}, ${longitude}`);
+    
+    if (!query || !latitude || !longitude) {
+        return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    console.log(`📍 Google Places API Response: ${response.data.results.length} results found.`);
-
-    let businesses = await Promise.all(
-      response.data.results.slice(0, 10).map(async (biz) => {
-        const details = await getBusinessDetails(biz.place_id);
-
-        return {
-          name: details?.name || biz.name,
-          address: details?.formatted_address || biz.formatted_address,
-          rating: details?.rating || 'No rating',
-          latitude: details?.geometry?.location?.lat || biz.geometry?.location?.lat,
-          longitude: details?.geometry?.location?.lng || biz.geometry?.location?.lng,
-          phone: details?.formatted_phone_number || 'N/A',
-          website: details?.website || 'N/A',
+    console.log(`🔍 Searching Google Places API with: ${query}`);
+    
+    try {
+        const params = {
+            location: `${latitude},${longitude}`,
+            radius: 10000,
+            keyword: query,
+            key: GOOGLE_PLACES_API_KEY
         };
-      })
-    );
 
-    console.log('✅ Final Processed Business Data:', businesses);
+        const response = await axios.get(PLACES_URL, { params });
+        console.log("📡 Google API Full Response:", response.data);
+        const results = response.data.results;
 
-    res.json({ businesses });
-  } catch (error) {
-    console.error('❌ Error processing request:', error.message);
-    res.status(500).json({ message: 'Failed to fetch data from Google Places' });
-  }
+        const businesses = await Promise.all(results.slice(0, 10).map(async (place) => {
+            return await getPlaceDetails(place.place_id);
+        }));
+
+        console.log(`✅ Final Processed Business Data:`, businesses);
+        res.json({ businesses });
+    } catch (error) {
+        console.error('❌ Error fetching businesses:', error);
+        res.status(500).json({ error: 'Failed to fetch data from Google Places API' });
+    }
 });
 
+async function getPlaceDetails(place_id) {
+    try {
+        const params = {
+            place_id,
+            fields: 'name,formatted_address,rating,geometry,formatted_phone_number,website,opening_hours,photos,types',
+            key: GOOGLE_PLACES_API_KEY
+        };
+
+        const response = await axios.get(DETAILS_URL, { params });
+        const details = response.data.result;
+
+        let photo_url = null;
+        if (details.photos && details.photos.length > 0) {
+            const photo_ref = details.photos[0].photo_reference;
+            photo_url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo_ref}&key=${GOOGLE_PLACES_API_KEY}`;
+        }
+
+        return {
+            name: details.name || "N/A",
+            address: details.formatted_address || "N/A",
+            rating: details.rating || "N/A",
+            latitude: details.geometry?.location?.lat || "N/A",
+            longitude: details.geometry?.location?.lng || "N/A",
+            phone: details.formatted_phone_number || "N/A",
+            website: details.website || "N/A",
+            opening_hours: details.opening_hours?.weekday_text?.join(', ') || "N/A",
+            category: details.types ? details.types[0].replace('_', ' ').toUpperCase() : "N/A",
+            photo: photo_url
+        };
+    } catch (error) {
+        console.error(`❌ Error fetching place details for ID ${place_id}:`, error);
+        return { name: "N/A", address: "N/A" };
+    }
+}
+
 app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

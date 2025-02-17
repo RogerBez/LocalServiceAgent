@@ -17,13 +17,6 @@ function MapComponent({ latitude, longitude, businesses }) {
         map.current.setCenter({ lat: latitude, lng: longitude });
       }
 
-      // ✅ Check if `AdvancedMarkerElement` exists before using it
-      if (window.google.maps.marker && window.google.maps.marker.AdvancedMarkerElement) {
-        console.log("✅ Using AdvancedMarkerElement");
-      } else {
-        console.warn("⚠️ AdvancedMarkerElement not available, using regular Marker");
-      }
-
       const markers = [];
 
       // 📌 User's location marker
@@ -73,7 +66,7 @@ function MapComponent({ latitude, longitude, businesses }) {
     } else {
       console.warn("❌ Google Maps API is not loaded.");
     }
-  }, [latitude, longitude, businesses]); // ✅ UseEffect dependencies
+  }, [latitude, longitude, businesses]);
 
   return <div ref={mapRef} style={{ height: '400px', width: '100%' }} />;
 }
