@@ -3,80 +3,79 @@ import React, { useEffect, useRef } from 'react';
 function MapComponent({ latitude, longitude, businesses }) {
   const mapRef = useRef(null);
   let map = useRef(null);
-  let userMarker = useRef(null);
-  let markers = [];
 
   useEffect(() => {
-    if (window.google) {
-      console.log('Google Maps API is available');
+    if (window.google && window.google.maps) {
+      console.log("✅ Google Maps API is available");
 
       if (!map.current) {
-        // Initialize the map only once
         map.current = new window.google.maps.Map(mapRef.current, {
           center: { lat: latitude, lng: longitude },
           zoom: 12,
         });
       } else {
-        // Re-center the map if latitude/longitude changes
         map.current.setCenter({ lat: latitude, lng: longitude });
       }
 
-      // Add or update the user marker
-      if (userMarker.current) {
-        userMarker.current.setPosition({ lat: latitude, lng: longitude });
+      // ✅ Check if `AdvancedMarkerElement` exists before using it
+      if (window.google.maps.marker && window.google.maps.marker.AdvancedMarkerElement) {
+        console.log("✅ Using AdvancedMarkerElement");
       } else {
-        userMarker.current = new window.google.maps.Marker({
-          position: { lat: latitude, lng: longitude },
-          map: map.current,
-          title: 'You are here',
-          icon: {
-            url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-          },
-        });
+        console.warn("⚠️ AdvancedMarkerElement not available, using regular Marker");
       }
 
-      // Clear existing business markers
-      markers.forEach(marker => marker.setMap(null));
-      markers = [];
+      const markers = [];
 
-      // Add markers for each business
+      // 📌 User's location marker
+      const userMarker = new window.google.maps.Marker({
+        position: { lat: latitude, lng: longitude },
+        map: map.current,
+        title: "You are here",
+        icon: {
+          url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+        },
+      });
+      markers.push(userMarker);
+
+      // 📌 Business markers
       if (Array.isArray(businesses) && businesses.length > 0) {
-        businesses.forEach(biz => {
-          if (biz.geometry.location.lat && biz.geometry.location.lng) {
+        businesses.forEach((biz) => {
+          if (biz.latitude && biz.longitude) {
             const marker = new window.google.maps.Marker({
-              position: { lat: biz.geometry.location.lat, lng: biz.geometry.location.lng },
+              position: { lat: biz.latitude, lng: biz.longitude },
               map: map.current,
               title: biz.name,
             });
 
             const infoWindow = new window.google.maps.InfoWindow({
               content: `
-                <div>
-                  <h4>${biz.name}</h4>
-                  <p>${biz.formatted_address}</p>
-                  <p>Rating: ${biz.rating || 'N/A'}</p>
-                  <a href="https://www.google.com/maps/dir/?api=1&destination=${biz.geometry.location.lat},${biz.geometry.location.lng}" target="_blank">Get Directions</a>
-                </div>
+                  <div>
+                      <h4>${biz.name}</h4>
+                      <p>${biz.address || "No address available"}</p>
+                      <p>Rating: ${biz.rating || "No rating"}</p>
+                      <a href="https://www.google.com/maps/dir/?api=1&destination=${biz.latitude},${biz.longitude}" target="_blank">Get Directions</a>
+                  </div>
               `,
             });
 
-            marker.addListener('click', () => infoWindow.open(map.current, marker));
+            marker.addListener("click", () => {
+              infoWindow.open(map.current, marker);
+            });
+
             markers.push(marker);
+          } else {
+            console.warn(`⚠️ Skipping business without location: ${biz.name}`);
           }
         });
       } else {
-        console.warn('No businesses to display on the map.');
+        console.warn("⚠️ No businesses to display on the map.");
       }
     } else {
-      console.warn('Google Maps API is not loaded.');
+      console.warn("❌ Google Maps API is not loaded.");
     }
-  }, [latitude, longitude, businesses]);
+  }, [latitude, longitude, businesses]); // ✅ UseEffect dependencies
 
-  return window.google ? (
-    <div ref={mapRef} style={{ height: '400px', width: '100%', borderRadius: '8px' }} />
-  ) : (
-    <p>Map is not available. Please try again later.</p>
-  );
+  return <div ref={mapRef} style={{ height: '400px', width: '100%' }} />;
 }
 
 export default MapComponent;

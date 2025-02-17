@@ -1,22 +1,23 @@
+require('dotenv').config({ path: './.env' });
+
+console.log("Google API Key:", process.env.GOOGLE_API_KEY);
+console.log("OpenAI API Key:", process.env.OPENAI_API_KEY ? "Loaded" : "Not found");
+
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const axios = require('axios');
-const dotenv = require('dotenv');
-
-dotenv.config();
+const { OpenAI } = require('openai');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const apiKey = process.env.GOOGLE_API_KEY;
+const openaiApiKey = process.env.OPENAI_API_KEY;
 
-console.log('dotenv loaded:', dotenv.config());
-console.log('API Key:', apiKey);
+console.log('Google API Key:', apiKey);
+console.log('OpenAI API Key:', openaiApiKey ? 'Loaded successfully' : 'Not found');
 
-// Middleware to parse JSON request body
 app.use(express.json());
 
-// Enable CORS for requests from your frontend
 const allowedOrigins = [
   'https://local-service-agent.vercel.app',
   'http://localhost:3000',
@@ -37,63 +38,81 @@ app.use(
   })
 );
 
-// Preflight handling
 app.options('*', cors());
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../client/build')));
+// 🔍 Function to Fetch Business Details
+const getBusinessDetails = async (placeId) => {
+  try {
+    const response = await axios.get('https://maps.googleapis.com/maps/api/place/details/json', {
+      params: {
+        place_id: placeId,
+        key: apiKey,
+        fields: 'name,formatted_address,rating,geometry,formatted_phone_number,website'
+      }
+    });
 
-// Test API route
+    return response.data.result || null;
+  } catch (error) {
+    console.error(`❌ Error fetching details for place_id ${placeId}:`, error.message);
+    return null;
+  }
+};
+
+// ✅ **Main API Route to Handle Queries**
 app.post('/query', async (req, res) => {
   console.log('--- Incoming payload ---');
   console.log('Request body:', req.body);
 
   const { query, latitude, longitude } = req.body;
+  if (!query) return res.status(400).json({ message: 'Query is required' });
 
-  if (!query) {
-    return res.status(400).json({ message: 'Query is required' });
-  }
-
-  console.log('Query:', query);
+  console.log('User Query:', query);
   console.log('Latitude:', latitude);
   console.log('Longitude:', longitude);
 
   try {
-    const params = {
-      query,
-      location: `${latitude},${longitude}`,
-      radius: 5000, // 5 km radius
-      key: apiKey,
-    };
+    console.log('🔍 Searching Google Places API with:', query);
+    const response = await axios.get('https://maps.googleapis.com/maps/api/place/textsearch/json', {
+      params: {
+        query,
+        location: `${latitude},${longitude}`,
+        radius: 10000, 
+        key: apiKey,
+      }
+    });
 
-    console.log('Request params:', params);
+    if (!response.data.results || response.data.results.length === 0) {
+      console.warn('❌ No businesses found.');
+      return res.json({ businesses: [] });
+    }
 
-    const response = await axios.get('https://maps.googleapis.com/maps/api/place/textsearch/json', { params });
+    console.log(`📍 Google Places API Response: ${response.data.results.length} results found.`);
 
-    console.log('Full Google Places Response:', JSON.stringify(response.data, null, 2));
+    let businesses = await Promise.all(
+      response.data.results.slice(0, 10).map(async (biz) => {
+        const details = await getBusinessDetails(biz.place_id);
 
-    const businesses = response.data.results.map((biz) => ({
-      name: biz.name,
-      address: biz.formatted_address,
-      rating: biz.rating || 'No rating',
-      latitude: biz.geometry?.location?.lat, // Add latitude
-      longitude: biz.geometry?.location?.lng, // Add longitude
-      phone: biz.formatted_phone_number || 'N/A' // Add phone if available
-    }));
+        return {
+          name: details?.name || biz.name,
+          address: details?.formatted_address || biz.formatted_address,
+          rating: details?.rating || 'No rating',
+          latitude: details?.geometry?.location?.lat || biz.geometry?.location?.lat,
+          longitude: details?.geometry?.location?.lng || biz.geometry?.location?.lng,
+          phone: details?.formatted_phone_number || 'N/A',
+          website: details?.website || 'N/A',
+        };
+      })
+    );
+
+    console.log('✅ Final Processed Business Data:', businesses);
 
     res.json({ businesses });
   } catch (error) {
-    console.error('Error fetching data from Google Places:', error.message);
+    console.error('❌ Error processing request:', error.message);
     res.status(500).json({ message: 'Failed to fetch data from Google Places' });
   }
 });
 
-// The "catchall" handler for React's index.html
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
-});
-
-// Start the server
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
