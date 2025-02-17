@@ -15,10 +15,28 @@ function App() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          console.log('📍 User location detected:', latitude, longitude); // 🔴 Check if this matches Milnerton
+          console.log('📍 Fresh user location detected:', latitude, longitude);
           setLocation({ latitude, longitude });
         },
-        (error) => console.error('❌ Error getting location:', error)
+        async (error) => {
+          console.error('❌ GPS Location Error:', error);
+          console.log('🌍 Falling back to IP-based location...');
+          
+          // Fetch IP-based location as a backup
+          try {
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            if (data.latitude && data.longitude) {
+              console.log('🌍 IP-based location:', data.latitude, data.longitude);
+              setLocation({ latitude: data.latitude, longitude: data.longitude });
+            } else {
+              console.error('⚠️ Could not get location from IP');
+            }
+          } catch (ipError) {
+            console.error('⚠️ IP Location Fetch Failed:', ipError);
+          }
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     }
   }, []);  
