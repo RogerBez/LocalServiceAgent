@@ -29,7 +29,6 @@ const BusinessCards = ({ businesses }) => {
               <p className="text-sm text-gray-600">
                 ⭐ {biz.rating} / 5 ({biz.reviews || "No"} reviews)
               </p>
-              {/* Display computed distance if available */}
               {biz.distance && (
                 <p className="text-sm text-gray-600">
                   <strong>Distance:</strong> {biz.distance.toFixed(2)} km
@@ -40,12 +39,33 @@ const BusinessCards = ({ businesses }) => {
             {/* Address */}
             <p className="text-gray-600 mt-2">{biz.address}</p>
 
+            {/* Opening Hours */}
+            <div className="opening-hours text-gray-600 mt-2">
+              <strong>Opening Hours:</strong>
+              {biz.opening_hours ? (
+                biz.opening_hours.includes("\n") ? (
+                  <ul className="list-disc ml-4 mt-1">
+                    {biz.opening_hours.split(/\r?\n/).map((line, idx) => (
+                      <li key={idx}>{line}</li>
+                    ))}
+                  </ul>
+                ) : biz.opening_hours.includes(",") ? (
+                  <ul className="list-disc ml-4 mt-1">
+                    {biz.opening_hours.split(", ").map((line, idx) => (
+                      <li key={idx}>{line}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-1">{biz.opening_hours}</p>
+                )
+              ) : (
+                <p className="mt-1">N/A</p>
+              )}
+            </div>
+
             {/* Additional Information */}
             <p className="text-gray-600 mt-2">
               <strong>Category:</strong> {biz.category || "N/A"}
-            </p>
-            <p className="text-gray-600">
-              <strong>Opening Hours:</strong> {biz.opening_hours || "N/A"}
             </p>
             <p className="text-gray-600">
               <strong>Service Options:</strong> {biz.service_options || "N/A"}
