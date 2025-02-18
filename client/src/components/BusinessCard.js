@@ -10,7 +10,10 @@ const BusinessCards = ({ businesses }) => {
       <h2 className="text-2xl font-semibold text-center mb-4">🔎 Search Results</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {businesses.map((biz, index) => (
-          <div key={index} className="bg-white rounded-xl shadow-lg p-4 transition hover:shadow-xl">
+          <div
+            key={index}
+            className="bg-white rounded-xl shadow-lg p-4 transition hover:shadow-xl"
+          >
             {/* Business Image */}
             {biz.photo && (
               <img
@@ -26,21 +29,38 @@ const BusinessCards = ({ businesses }) => {
               <p className="text-sm text-gray-600">
                 ⭐ {biz.rating} / 5 ({biz.reviews || "No"} reviews)
               </p>
+              {/* Display computed distance if available */}
+              {biz.distance && (
+                <p className="text-sm text-gray-600">
+                  <strong>Distance:</strong> {biz.distance.toFixed(2)} km
+                </p>
+              )}
             </div>
 
             {/* Address */}
             <p className="text-gray-600 mt-2">{biz.address}</p>
 
             {/* Additional Information */}
-            <p className="text-gray-600 mt-2"><strong>Category:</strong> {biz.category || "N/A"}</p>
-            <p className="text-gray-600"><strong>Opening Hours:</strong> {biz.opening_hours || "N/A"}</p>
-            <p className="text-gray-600"><strong>Service Options:</strong> {biz.service_options || "N/A"}</p>
-            <p className="text-gray-600"><strong>Amenities:</strong> {biz.amenities || "N/A"}</p>
+            <p className="text-gray-600 mt-2">
+              <strong>Category:</strong> {biz.category || "N/A"}
+            </p>
+            <p className="text-gray-600">
+              <strong>Opening Hours:</strong> {biz.opening_hours || "N/A"}
+            </p>
+            <p className="text-gray-600">
+              <strong>Service Options:</strong> {biz.service_options || "N/A"}
+            </p>
+            <p className="text-gray-600">
+              <strong>Amenities:</strong> {biz.amenities || "N/A"}
+            </p>
 
             {/* Phone & Website */}
             <div className="mt-3 flex flex-col space-y-2">
               {biz.phone && (
-                <a href={`tel:${biz.phone}`} className="text-blue-600 font-medium hover:underline">
+                <a
+                  href={`tel:${biz.phone}`}
+                  className="text-blue-600 font-medium hover:underline"
+                >
                   📞 {biz.phone}
                 </a>
               )}
