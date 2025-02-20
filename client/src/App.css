@@ -142,9 +142,8 @@ button:hover {
 
 /* Directions button */
 .directions-button {
-  display: inline-block;
   background-color: #27ae60;
-  color: white;
+  color: white !important; /* Forces text color */
   padding: 10px 14px;
   border-radius: 6px;
   text-decoration: none;

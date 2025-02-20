@@ -4,18 +4,22 @@ import "./App.css";
 
 // Helper function to compute distance between two coordinates in km
 function computeDistance(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return null; // Prevent errors if any value is missing
   const R = 6371; // Earth radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c; // Distance in km
+  return (R * c).toFixed(2); // Returns distance as a formatted string
 }
 
 function App() {
-  const [messages, setMessages] = useState([{ sender: "agent", text: "Hi there! What product or service do you need today?" }]);
+  const [messages, setMessages] = useState([
+    { sender: "agent", text: "Hi there! What product or service do you need today?" }
+  ]);
   const [query, setQuery] = useState("");
   const [businesses, setBusinesses] = useState([]);
   const [location, setLocation] = useState(null);
@@ -23,8 +27,7 @@ function App() {
   const chatWindowRef = useRef(null);
 
   useEffect(() => {
-    // Clear any stored location data
-    localStorage.removeItem("userLocation");
+    localStorage.removeItem("userLocation"); // Clear any stored location data
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -88,22 +91,22 @@ function App() {
         longitude: location.longitude
       });
 
-      // Compute the distance for each business and attach it
+      // Ensure businesses exist
       let businessesWithDistance = res.data.businesses.map((biz) => {
         if (biz.latitude && biz.longitude) {
           const distance = computeDistance(location.latitude, location.longitude, biz.latitude, biz.longitude);
-          return { ...biz, distance };
+          return { ...biz, distance: parseFloat(distance) || 99999 }; // Ensure distance is always a valid number
         }
-        return biz;
+        return { ...biz, distance: 99999 }; // Default high value to avoid sorting issues
       });
 
       // Sort by rating or distance based on user selection
-      let sortedBusinesses = businessesWithDistance;
-      if (sortOption === "rating") {
-        sortedBusinesses = businessesWithDistance.sort((a, b) => b.rating - a.rating);
-      } else if (sortOption === "distance") {
-        sortedBusinesses = businessesWithDistance.sort((a, b) => a.distance - b.distance);
-      }
+      let sortedBusinesses = [...businessesWithDistance]; // Clone array before sorting
+      if (sortOption === 'rating') {
+        sortedBusinesses.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      } else if (sortOption === 'distance') {
+        sortedBusinesses.sort((a, b) => (a.distance || 99999) - (b.distance || 99999));
+      }    
 
       setBusinesses(sortedBusinesses);
       setMessages((prev) => [
@@ -111,7 +114,7 @@ function App() {
         { sender: "agent", text: "Great! Here are the top results for you:" }
       ]);
     } catch (error) {
-      console.error("Error fetching businesses:", error);
+      console.error("❌ Error fetching businesses:", error);
       setMessages((prev) => [
         ...prev,
         { sender: "agent", text: "Something went wrong. Try again!" }
@@ -156,9 +159,13 @@ function App() {
             <p>
               <strong>Rating:</strong> {biz.rating ? `${biz.rating} ⭐` : "No rating"}
             </p>
-            {biz.distance && (
-              <p>
+            {biz.distance !== 99999 ? (
+              <p className="text-sm text-gray-600">
                 <strong>Distance:</strong> {biz.distance.toFixed(2)} km
+              </p>
+            ) : (
+              <p className="text-sm text-gray-600">
+                <strong>Distance:</strong> N/A
               </p>
             )}
             <p><strong>Phone:</strong> {biz.phone || "N/A"}</p>
