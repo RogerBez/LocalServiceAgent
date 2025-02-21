@@ -17,7 +17,50 @@ const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 const PLACES_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
 const DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json";
 
-// Route to handle search queries
+// ✅ Route to fetch images
+app.get("/images", async (req, res) => {
+  const { place_id } = req.query;
+
+  if (!place_id) {
+    return res.status(400).json({ error: "Missing place_id parameter" });
+  }
+
+  try {
+    const response = await axios.get("https://maps.googleapis.com/maps/api/place/details/json", {
+      params: {
+        place_id,
+        fields: "photos",
+        key: GOOGLE_PLACES_API_KEY,
+      }
+    });
+
+    const details = response.data.result;
+
+    // 🛠 Debugging: Log the full details object to check if photos exist
+    console.log("🔍 Details for Place ID:", place_id, JSON.stringify(details, null, 2));
+
+    // Check if photos exist
+    if (!details || !details.photos || details.photos.length === 0) {
+      console.log("🚫 No photos found for this place.");
+      return res.json({ imageUrls: [] });
+    }
+
+    // Extract photo URLs
+    const imageUrls = details.photos.map(photo =>
+      `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photo_reference}&key=${GOOGLE_PLACES_API_KEY}`
+    );
+
+    console.log("✅ Image URLs generated:", imageUrls);
+
+    res.json({ imageUrls });
+  } catch (error) {
+    console.error("❌ Error fetching images:", error.message);
+    res.status(500).json({ error: "Failed to fetch images" });
+  }
+});
+
+
+// ✅ Route to handle search queries
 app.post("/query", async (req, res) => {
   const { query, latitude, longitude } = req.body;
 
@@ -54,7 +97,7 @@ app.post("/query", async (req, res) => {
   }
 });
 
-// Function to fetch additional details for a given place
+// ✅ Function to fetch additional details for a given place
 async function getPlaceDetails(place_id, userLat, userLng) {
   try {
     const params = {
@@ -87,14 +130,11 @@ async function getPlaceDetails(place_id, userLat, userLng) {
       longitude: details.geometry?.location?.lng || "N/A",
       phone: details.formatted_phone_number || "N/A",
       website: details.website || "N/A",
-      distance: distance, // Distance from user
-      opening_hours: details.opening_hours && details.opening_hours.weekday_text
-        ? details.opening_hours.weekday_text.join("\n") // New: Properly formatted
+      opening_hours: details.opening_hours && details.opening_hours.weekday_text 
+        ? details.opening_hours.weekday_text.join("\n")
         : "N/A",
       category: details.types ? details.types[0].replace("_", " ").toUpperCase() : "N/A",
-      photo: photo_url,
       aggregatedReviews: details.user_ratings_total || "N/A",
-      // Placeholder for social media links – update these if you have real data
       socialLinks: {
         facebook: null,
         instagram: null,
@@ -107,7 +147,7 @@ async function getPlaceDetails(place_id, userLat, userLng) {
   }
 }
 
-// Helper function: Calculate distance between two coordinates
+// ✅ Helper function: Calculate distance between two coordinates
 function getDistance(lat1, lon1, lat2, lon2) {
   const toRad = (angle) => (Math.PI * angle) / 180;
   const R = 6371; // Radius of Earth in km
@@ -123,6 +163,7 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return (R * c).toFixed(2); // Distance in km, rounded to 2 decimal places
 }
 
+// ✅ Ensure app.listen() is the LAST thing in the file!
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

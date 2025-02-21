@@ -4,16 +4,41 @@ import { FaStar, FaRegStar, FaPhoneAlt, FaWhatsapp, FaFacebook, FaInstagram, FaT
 const BusinessCard = ({ biz }) => {
   const [expanded, setExpanded] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [imageUrls, setImageUrls] = useState([]);
 
   const toggleAccordion = () => setExpanded(!expanded);
   const toggleBookmark = () => setBookmarked(!bookmarked);
+  const toggleModal = async () => {
+    if (!showModal) {
+      // Fetch images when modal opens
+      await fetchImages();
+    }
+    setShowModal(!showModal);
+  };
 
   // Format phone number for WhatsApp
   const formatPhoneForWhatsApp = (phone) => phone?.replace(/\D/g, "");
 
+  // Function to fetch images dynamically
+  const fetchImages = async () => {
+    try {
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const response = await fetch(`${API_URL}/images?place_id=${biz.place_id}`);
+      const data = await response.json();
+  
+      if (data.imageUrls.length > 0) {
+        setImageUrls(data.imageUrls); // ✅ Save images for display
+      } else {
+        console.log("No images found for this business.");
+      }
+    } catch (error) {
+      console.error("Error fetching images:", error);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-4 transition hover:shadow-xl text-left">
-      
       {/* Business Logo */}
       {biz.logo && (
         <img
@@ -36,14 +61,14 @@ const BusinessCard = ({ biz }) => {
 
       {/* Distance Handling */}
       {biz.distance && !isNaN(biz.distance) ? (
-  <p className="text-sm text-gray-600">
-    <strong>Distance:</strong> {parseFloat(biz.distance).toFixed(2)} km
-  </p>
-) : (
-  <p className="text-sm text-gray-600">
-    <strong>Distance:</strong> N/A
-  </p>
-)}
+        <p className="text-sm text-gray-600">
+          <strong>Distance:</strong> {parseFloat(biz.distance).toFixed(2)} km
+        </p>
+      ) : (
+        <p className="text-sm text-gray-600">
+          <strong>Distance:</strong> N/A
+        </p>
+      )}
 
       <p className="text-gray-600 mt-2">{biz.address}</p>
 
@@ -71,15 +96,21 @@ const BusinessCard = ({ biz }) => {
         )}
       </div>
 
-      {/* Business Image */}
-      {biz.photo && (
-        <img
-          src={biz.photo}
-          alt={`Image of ${biz.name}`}
-          className="w-full object-cover rounded-lg"
-          style={{ objectFit: "cover", height: "200px", borderRadius: "8px" }}
-        />
-      )}
+     {/* Show button only if images exist */}
+{/* Show button only if images exist */}
+{imageUrls.length > 0 && (
+  {/* Show button only if images exist */}
+{imageUrls.length > 0 && (
+  <div className="mt-3">
+    <button
+      onClick={toggleModal}
+      className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600"
+    >
+      📸 View Images
+    </button>
+  </div>
+)}
+
 
       {/* Get Directions Button */}
       <div className="mt-4">
@@ -88,7 +119,7 @@ const BusinessCard = ({ biz }) => {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block bg-blue-500 px-4 py-2 rounded-lg font-medium hover:bg-blue-600"
-          style={{ color: "#ffffff", backgroundColor: "#2196F3" }} // Force white text
+          style={{ color: "#ffffff", backgroundColor: "#2196F3" }}
         >
           📍 Get Directions
         </a>
@@ -105,55 +136,22 @@ const BusinessCard = ({ biz }) => {
         </div>
       )}
 
-      {/* Accordion for More Details */}
-      <div className="mt-4">
-        <button onClick={toggleAccordion} className="text-sm text-blue-600 underline focus:outline-none">
-          {expanded ? "Show Less" : "Show More"}
-        </button>
-        {expanded && (
-          <div className="mt-2">
-            {/* Opening Hours */}
-            <div className="text-gray-600 mt-2">
-              <strong>Opening Hours:</strong>
-              {biz.opening_hours ? (
-                <ul className="list-disc ml-4 mt-1">
-                  {biz.opening_hours.split(/\r?\n|, /).map((line, idx) => (
-                    <li key={idx}>{line}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-1">N/A</p>
-              )}
-            </div>
-
-            {/* Additional Details */}
-            <p className="text-gray-600 mt-2">
-              <strong>Category:</strong> {biz.category || "N/A"}
-            </p>
-
-            {/* Social Media Links */}
-            {biz.socialLinks && (
-              <div className="mt-2 flex gap-2">
-                {biz.socialLinks.facebook && (
-                  <a href={biz.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600">
-                    <FaFacebook size={20} />
-                  </a>
-                )}
-                {biz.socialLinks.instagram && (
-                  <a href={biz.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600">
-                    <FaInstagram size={20} />
-                  </a>
-                )}
-                {biz.socialLinks.twitter && (
-                  <a href={biz.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-blue-400">
-                    <FaTwitter size={20} />
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+     {/* Modal for Viewing Images */}
+{showModal && (
+  <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
+      <h2 className="text-xl font-bold">Images</h2>
+      <button onClick={toggleModal} className="absolute top-2 right-4 text-gray-600">✖</button>
+      {imageUrls.length > 0 ? (
+        imageUrls.map((url, index) => (
+          <img key={index} src={url} alt={`Image ${index + 1}`} className="w-full h-auto mt-4 rounded-lg" />
+        ))
+      ) : (
+        <p>No images available.</p>
+      )}
+    </div>
+  </div>
+)}
     </div>
   );
 };

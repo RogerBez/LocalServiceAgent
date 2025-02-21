@@ -40,8 +40,11 @@ body {
 
 /* Business Card Styling */
 .business-card {
-  width: 280px;
-  height: 450px; /* Uniform height */
+  width: 320px;
+  height: 500px; /* Adjust height for consistency */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   border: 1px solid #ddd;
   padding: 15px;
   border-radius: 12px;
@@ -49,21 +52,29 @@ body {
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease-in-out;
   text-align: left;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  overflow: hidden;
 }
 
 .business-card:hover {
   transform: scale(1.05);
 }
 
-/* Business Card Images */
-.business-photo {
+/* Styling for "View Images" button */
+.view-images-button {
+  background-color: #2196F3;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
   width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 8px;
+  text-align: center;
+  transition: background 0.3s ease;
+  border: none;
+}
+
+.view-images-button:hover {
+  background-color: #1976D2;
 }
 
 /* Business Card Logo */
@@ -88,9 +99,17 @@ body {
   font-size: 14px;
   margin: 5px 0;
   color: #555;
-  max-height: 40px;
+  max-height: 50px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Ensure images fit inside cards */
+.business-card img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
 }
 
 /* Buttons & Links */
@@ -101,6 +120,7 @@ body {
   font-weight: bold;
 }
 
+/* Get Directions Button */
 .directions-button {
   display: inline-block;
   background-color: #27ae60;
@@ -111,7 +131,8 @@ body {
   font-size: 14px;
   transition: background 0.3s ease;
   text-align: center;
-  width: 100%; /* Ensures full width */
+  width: 100%;
+  border: none;
 }
 
 .directions-button:hover {
@@ -167,4 +188,49 @@ body {
 
 .social-icons a:hover {
   color: #21618c;
+}
+
+/* Styles for pop-up modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+  text-align: center;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.modal-content img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.modal-close-button {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #555;
+}
+
+.modal-close-button:hover {
+  color: red;
 }
